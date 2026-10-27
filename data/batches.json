@@ -1,0 +1,10 @@
+[
+  {
+    "id": "BAT001",
+    "medicine_id": "MED001",
+    "batch_number": "1",
+    "received_date": "2026-10-27",
+    "expiry_date": "2026-10-27",
+    "quantity": 0
+  }
+]

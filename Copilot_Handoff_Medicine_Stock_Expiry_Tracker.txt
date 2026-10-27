@@ -1,0 +1,320 @@
+MEDICINE STOCK & EXPIRY TRACKER
+COPILOT HANDOFF DOCUMENT
+Version 1 | Beginner-friendly | Buildable scope
+
+============================================================
+PURPOSE
+============================================================
+
+Give this document to GitHub Copilot as the source of truth for the project. Copilot should follow the requirements, build in small stages, explain important code, and avoid adding features or technologies that are not requested.
+
+PROJECT SUMMARY
+- Goal: A small inventory app for tracking medicines, batches, quantities and expiry dates.
+- Language / UI: Python + Streamlit.
+- Storage: Local JSON files; no database.
+- Design approach: Simple functions/classes, clear files, minimal dependencies.
+- User: One staff member using a local educational/demo app.
+- Team: Two members, with responsibilities defined below.
+
+Build a small, correct, understandable application—not an enterprise pharmacy platform.
+
+============================================================
+1. INSTRUCTIONS FOR COPILOT
+============================================================
+
+Treat this document as the requirements specification. Implement only Version 1. Do not silently expand the scope.
+
+- Work in stages. First inspect the current workspace and report what exists. Then propose a short implementation plan before making broad changes.
+- Keep it beginner-friendly. Use readable Python, descriptive names, short functions and comments only where they help. Avoid unnecessary abstractions, inheritance, design patterns and complex architecture.
+- Keep dependencies minimal. Use Streamlit for the interface and Python standard-library modules for JSON, dates, paths and basic validation. Do not add a database, API, ORM, authentication or AI.
+- Preserve existing work. If code already exists, inspect it and make targeted changes. Do not overwrite files blindly.
+- Explain as you build. For each stage, list files changed, how to run the app, what was tested and any known limitations.
+- Do not fake completion. Run available checks where possible and clearly identify anything not tested.
+
+Recommended Copilot workflow:
+1. Inspect: summarise workspace and identify missing files. No files changed yet; agree on the plan.
+2. Core logic: medicine/batch models or simple data structures, validation and stock calculations. Run basic Python examples/tests.
+3. Persistence: load/save JSON safely. Verify restart test preserves data.
+4. Interface: Streamlit pages/forms/tables connected to core logic. Verify the manual workflow.
+5. Quality: edge-case checks and README. Run through the acceptance checklist.
+
+============================================================
+2. PROJECT OBJECTIVE AND BOUNDARIES
+============================================================
+
+Create a local, single-user Medicine Stock & Expiry Tracker. It stores a medicine catalogue and separate stock batches, calculates stock totals and expiry status, flags low stock, records quantity changes, and presents a simple dashboard.
+
+IN SCOPE
+- Add, search, view and edit medicine records.
+- Add and view batches; one medicine may have multiple batches.
+- Show total usable stock per medicine and quantity per batch.
+- Show expired, near-expiry and low-stock alerts.
+- Record stock-in and stock-out changes with a reason.
+- Save and reload records using local JSON files.
+- Show a simple dashboard and basic inventory/expiry/movement tables.
+
+OUT OF SCOPE — DO NOT IMPLEMENT
+- Patient records, prescriptions, dosage or treatment recommendations.
+- Billing, point-of-sale, barcode scanning or supplier integrations.
+- Automatic purchase orders, notifications, cloud hosting or multi-user access.
+- Login/roles, REST APIs, SQL databases, machine learning or external services.
+- Regulatory compliance or clinical decision support.
+
+Safety and scope:
+This is an educational inventory tracker. It is not a real pharmacy operations or clinical system. Use fictional sample data in demos.
+
+============================================================
+3. REQUIRED DATA
+============================================================
+
+Medicine record — required fields:
+- medicine_id
+- name
+- category
+- unit
+- reorder_level
+- is_active
+
+The manufacturer and generic_name fields may be optional. Medicine details are not batch details.
+
+Stock batch — required fields:
+- batch_id
+- medicine_id
+- batch_number
+- received_date
+- expiry_date
+- quantity
+
+Each batch belongs to an existing medicine. Supplier may be optional.
+
+Stock movement — required fields:
+- movement_id
+- batch_id
+- medicine_id
+- movement_type
+- quantity
+- date/time
+- reason
+
+Record successful stock changes only. Quantity is a positive change amount.
+
+DATA CONVENTIONS
+- Use unique, stable IDs such as MED001, BAT001 and MOV001. Never use a list position as an ID.
+- Store dates as YYYY-MM-DD strings in JSON and parse them into date objects for comparisons.
+- Quantities and reorder levels must be whole numbers. A received batch must have quantity greater than zero.
+- Use one consistent JSON structure across all modules. Lists of dictionaries are sufficient for this project.
+- If a medicine has history, prefer marking it inactive over deleting it.
+
+SUGGESTED PROJECT LAYOUT
+
+MedicineStockTracker/
+    app.py
+    medicine.py
+    inventory.py
+    alerts.py
+    file_manager.py
+    data/
+        medicines.json
+        batches.json
+        movements.json
+    tests/ (simple tests or documented manual test cases)
+    README.md
+
+This layout is a suggestion, not a reason to create empty files prematurely. Copilot may keep a simpler layout if the same responsibilities remain clear.
+
+============================================================
+4. CORE BEHAVIOUR AND BUSINESS RULES
+============================================================
+
+EXPIRY STATUS
+
+OUT_OF_STOCK:
+- Batch quantity is 0.
+
+EXPIRED:
+- Quantity is above 0 and expiry date is before today.
+
+EXPIRING_SOON:
+- Quantity is above 0 and today <= expiry date <= today + 90 days.
+
+IN_STOCK:
+- Quantity is above 0 and expiry date is later than today + 90 days.
+
+Use a single shared function to calculate expiry status everywhere. The 90-day warning window can be a simple constant in Version 1. An expiry date equal to today is not classified as expired under these rules.
+
+STOCK TOTALS AND ALERTS
+- Usable stock: sum quantities from batches with quantity above zero and expiry date today or later.
+- Low stock: for an active medicine, show an alert when usable stock is less than or equal to its reorder_level.
+- Near expiry: show batches within the 90-day window when quantity is above zero.
+- Expired stock: show separately and exclude it from usable-stock totals.
+- Do not let the UI calculate stock totals independently; call the shared Python logic.
+
+STOCK-IN / STOCK-OUT
+- Stock-in increases the selected batch quantity and records a movement reason.
+- Stock-out requires a positive quantity and must not exceed the selected batch's available quantity.
+- For Version 1, reject stock-out from an expired batch.
+- Validate first. If validation fails, do not change quantity and do not create a movement record.
+- After a successful change, save the updated batch and movement history.
+
+============================================================
+5. SCREENS REQUIRED
+============================================================
+
+Dashboard:
+- Count of active medicines and batches.
+- Total usable units.
+- Expired batches.
+- Near-expiry batches.
+- Low-stock medicines.
+
+Medicine catalogue:
+- List/search medicines.
+- Form to add or edit a medicine.
+- Activate/deactivate a medicine.
+
+Batch inventory:
+- List batches with medicine, batch number, quantity, received date, expiry date and calculated status.
+- Form to add a batch.
+
+Stock movement:
+- Select batch.
+- Choose stock-in or stock-out.
+- Enter positive quantity and reason.
+- Show movement history.
+
+Expiry alerts:
+- Separate expired and near-expiry batches.
+- Show dates and quantities.
+
+Low-stock alerts:
+- Medicines whose usable stock is at or below reorder level.
+
+Reports:
+- Simple inventory summary and movement history tables.
+- Download/export is optional, not required.
+
+INTERFACE EXPECTATIONS
+- Keep navigation simple. Streamlit sidebar navigation or tabs are sufficient.
+- Use forms for add/update actions and tables for lists.
+- Show clear success/error messages after actions.
+- Display text status labels; do not rely on colour alone.
+- Refresh displayed data after a successful change.
+- Do not spend time on elaborate styling before the workflow works.
+
+============================================================
+6. SPLIT OWNERSHIP BETWEEN TWO MEMBERS
+============================================================
+
+MEMBER 1
+Medicine catalogue and batch management:
+- Medicine fields.
+- Add/search/edit medicine.
+- Batch creation.
+- Required-field checks.
+- ID/date validation.
+
+MEMBER 2
+Inventory, alerts and reports:
+- Stock-in/out.
+- Movement history.
+- Usable-stock totals.
+- Expiry and low-stock calculations.
+- Dashboard/report tables.
+
+BOTH MEMBERS
+- Agree on field names and function inputs before parallel work.
+- Integrate Streamlit UI and JSON persistence.
+- Test the app.
+- Prepare README and demo.
+
+Keep the interface between the two parts small. Before coding separately, agree on the exact JSON keys and function names. Avoid duplicate copies of validation or stock calculations.
+
+============================================================
+7. ACCEPTANCE CRITERIA
+============================================================
+
+Version 1 is complete only when the following can be demonstrated:
+
+- A user can add, search and edit a medicine.
+- A user can add at least two batches for the same medicine with different expiry dates.
+- The app shows correct batch status and usable-stock total.
+- Expired and near-expiry batches appear in the correct lists.
+- Low-stock alert appears when usable stock is at or below the reorder level.
+- Valid stock-in/out changes quantity and records a movement with a reason.
+- Invalid stock-out leaves both quantity and movement history unchanged.
+- Data is still available after closing and restarting the app.
+- Missing JSON files are handled by starting with empty collections.
+- Malformed JSON produces a clear error and must not be silently overwritten.
+- The app runs locally using the README instructions.
+
+REQUIRED EDGE-CASE CHECKS
+
+1. Blank medicine name -> reject and show a helpful message.
+2. Batch refers to unknown medicine -> reject batch creation.
+3. Negative or invalid quantity -> reject without changing data.
+4. Stock-out is greater than available quantity -> reject; no movement is recorded.
+5. Invalid date string -> reject and explain the required date format.
+6. Batch expired yesterday -> mark expired and exclude from usable stock.
+7. Batch expires today -> not expired under the defined rule; apply the 90-day warning rule.
+8. JSON file missing on first run -> use an empty collection and create the file on save.
+
+============================================================
+8. BUILD ORDER AND COMMANDS
+============================================================
+
+Build in this order:
+1. Inspect workspace and agree on data fields.
+2. Implement medicine and batch data handling and validation.
+3. Implement stock totals, stock-in/out and movement history.
+4. Implement expiry and low-stock calculations.
+5. Implement JSON load/save and error handling.
+6. Connect the Streamlit screens to the Python logic.
+7. Run acceptance tests and fix issues.
+8. Write README and rehearse the end-to-end demo.
+
+LOCAL SETUP
+
+Run from the project folder:
+
+    python -m venv .venv
+    # Activate the virtual environment
+    pip install streamlit
+    streamlit run app.py
+
+Windows activation:
+    .venv\Scripts\activate
+
+Linux/macOS activation:
+    source .venv/bin/activate
+
+END-TO-END DEMO
+1. Add a sample medicine with reorder level 50.
+2. Receive two batches with different expiry dates.
+3. Show the dashboard and expiry alerts.
+4. Stock out 20 units from a non-expired batch and show movement history.
+5. Try to stock out more than the available quantity and show the validation error.
+6. Show low-stock alert using sample data, then restart the app and confirm persistence.
+
+============================================================
+9. COPY-AND-PASTE PROMPT FOR COPILOT
+============================================================
+
+You are helping me build a beginner-friendly Python project called Medicine Stock & Expiry Tracker. Follow the Copilot Handoff document as the source of truth for requirements. Implement only Version 1.
+
+Use Python, Streamlit and local JSON files. Do not add SQL, APIs, authentication, cloud services, AI, billing, patient data or other out-of-scope features. Keep the code readable and simple enough for a beginner to understand.
+
+First inspect the existing workspace and tell me what is already present and what is missing. Do not overwrite existing work blindly. Then propose a short staged plan.
+
+Build one stage at a time, explaining which files you create/change, how to run them, and how you verified the result. Use stable IDs, YYYY-MM-DD dates, validated non-negative integer quantities, one shared expiry-status function, usable-stock calculations that exclude expired batches, low-stock alerts based on reorder level, and stock movement records for successful quantity changes.
+
+Invalid operations must not change data or create movement records. Handle missing JSON files safely and never silently overwrite malformed JSON.
+
+After each stage, run available checks or provide exact manual test steps. Do not claim a test passed unless it was run. Ask me before making a significant design choice that is not covered by the requirements.
+
+Start with workspace inspection only.
+
+============================================================
+FINAL PRINCIPLE
+============================================================
+
+Copilot is the coding assistant, not the project owner. Review each change, run the app, test the edge cases and make sure you can explain the code before accepting it.

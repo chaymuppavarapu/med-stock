@@ -1,0 +1,20 @@
+[
+  {
+    "id": "MOV001",
+    "batch_id": "BAT001",
+    "medicine_id": "MED001",
+    "movement_type": "IN",
+    "quantity": 1,
+    "date_time": "2026-10-27T10:51:41",
+    "reason": "customer"
+  },
+  {
+    "id": "MOV002",
+    "batch_id": "BAT001",
+    "medicine_id": "MED001",
+    "movement_type": "OUT",
+    "quantity": 2,
+    "date_time": "2026-10-27T10:52:02",
+    "reason": "customer"
+  }
+]
