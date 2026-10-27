@@ -26,6 +26,17 @@ A small beginner-friendly Streamlit app for tracking medicines, batches, expiry 
 
 Data is stored in `data/medicines.json`, `data/batches.json`, and `data/movements.json`. Missing files start as empty lists. Invalid JSON is reported instead of being overwritten.
 
+## Deploy the app
+
+This is a Streamlit app, so deploy it with **Streamlit Community Cloud** or another host that can run a persistent Python process. Vercel's Python runtime expects a serverless `app`, `application`, or `handler` function and cannot run Streamlit directly. If Vercel reports `PYTHON_ENTRYPOINT_NOT_FOUND` for `app.py`, use Streamlit Community Cloud instead:
+
+1. Push this repository to GitHub.
+2. Open [share.streamlit.io](https://share.streamlit.io).
+3. Choose this repository and the `main` branch.
+4. Set the main file to `app.py`.
+
+The local JSON files are suitable for this educational single-user project. A hosted multi-user app would need persistent shared storage.
+
 ## Run tests
 
 ```text
